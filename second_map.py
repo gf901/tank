@@ -1,5 +1,5 @@
-﻿from Wall import Wall
-from Water import Water
+﻿from wall import Wall
+from water import Water
 
 SCREEN_WIDTH = 70*13
 SCREEN_HEIGHT = 680

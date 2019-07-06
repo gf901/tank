@@ -1,4 +1,4 @@
-from Wall import Wall
+from wall import Wall
 
 SCREEN_WIDTH = 70*13
 SCREEN_HEIGHT = 680

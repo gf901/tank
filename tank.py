@@ -14,9 +14,12 @@ COLOR_BLACK = pygame.color.Color(0, 0, 0)
 # 敌方tank数量
 ENEMY_COUNT = 10
 # p1初始位置
-P1_BORN_X = 280
+P1_BORN_X = SCREEN_WIDTH/2 - 180
 P1_BORN_Y = SCREEN_HEIGHT - 60
-# p1生命值
+# p2初始位置
+P2_BORN_X = SCREEN_WIDTH/2 + 120
+P2_BORN_Y = SCREEN_HEIGHT - 60
+# 我方初始生命值
 HP = 3
 
 
@@ -54,17 +57,18 @@ class BaseTank:
 
     # 展示出生
     def display_born(self, x, y):
-        if not self.is_born:
-            if self.born_step > 0:
-                self.born_step -= 1
-            else:
-                MainGame.window.blit(self.born_images[self.born_num], (x, y))
-                self.born_num += 1
-                self.born_step = 10
-        if self.born_num == len(self.born_images):
-            self.is_born = 1
-            self.born_step = 0
-            self.born_num = 0
+        if self.live:
+            if not self.is_born:
+                if self.born_step > 0:
+                    self.born_step -= 1
+                else:
+                    MainGame.window.blit(self.born_images[self.born_num], (x, y))
+                    self.born_num += 1
+                    self.born_step = 10
+            if self.born_num == len(self.born_images):
+                self.is_born = 1
+                self.born_step = 0
+                self.born_num = 0
 
     # 绘制tank
     def display_tank(self):
@@ -117,32 +121,62 @@ class BaseTank:
 
 # 我方坦克类
 class MyTank(BaseTank):
-    def __init__(self, x, y):
+    def __init__(self, x, y, player=1):
         super(MyTank, self).__init__(x, y)
+        if player == 1:
+            self.image_dict = {
+                "U": pygame.image.load("img/p1tankU.gif"),
+                "D": pygame.image.load("img/p1tankD.gif"),
+                "R": pygame.image.load("img/p1tankR.gif"),
+                "L": pygame.image.load("img/p1tankL.gif")
+            }
+        elif player == 2:
+            self.image_dict = {
+                "U": pygame.image.load("img/p2tankU.gif"),
+                "D": pygame.image.load("img/p2tankD.gif"),
+                "R": pygame.image.load("img/p2tankR.gif"),
+                "L": pygame.image.load("img/p2tankL.gif")
+            }
         self.bullet_list = []
         self.hp = HP
         self.shot_enemy = 0
         self.is_hit = False
         self.oldx = self.rect.x
         self.oldy = self.rect.y - self.rect.height * 2
+        self.my_bullet_create_speed = 10
+        self.player = player
 
     def move(self):
         self.oldx = self.rect.x
         self.oldy = self.rect.y
         if self.is_born:
             key_list = pygame.key.get_pressed()
-            if key_list[pygame.K_UP]:
-                self.direction = "U"
-                super().move()
-            elif key_list[pygame.K_DOWN]:
-                self.direction = "D"
-                super().move()
-            elif key_list[pygame.K_RIGHT]:
-                self.direction = "R"
-                super().move()
-            elif key_list[pygame.K_LEFT]:
-                self.direction = "L"
-                super().move()
+            if self.player == 1:
+                if key_list[pygame.K_w]:
+                    self.direction = "U"
+                    super().move()
+                elif key_list[pygame.K_s]:
+                    self.direction = "D"
+                    super().move()
+                elif key_list[pygame.K_d]:
+                    self.direction = "R"
+                    super().move()
+                elif key_list[pygame.K_a]:
+                    self.direction = "L"
+                    super().move()
+            elif self.player == 2:
+                if key_list[pygame.K_UP]:
+                    self.direction = "U"
+                    super().move()
+                elif key_list[pygame.K_DOWN]:
+                    self.direction = "D"
+                    super().move()
+                elif key_list[pygame.K_RIGHT]:
+                    self.direction = "R"
+                    super().move()
+                elif key_list[pygame.K_LEFT]:
+                    self.direction = "L"
+                    super().move()
 
     # 我方坦克撞敌方坦克
     def hit_tank(self):
@@ -275,11 +309,16 @@ class Bullet:
             self.live = False
 
     def hit_tank(self, tank):
-        if tank.is_born:
+        if tank.is_born and tank.live:
             if pygame.sprite.collide_rect(self, tank):
                 MainGame.bomb_list.append(Bomb(tank.rect))
                 self.live = False
-                tank.live = False
+                if isinstance(tank, MyTank):
+                    tank.hp -= 1
+                    if tank.hp < 1:
+                        tank.live = False
+                else:
+                    tank.live = False
                 return 1
 
     def hit_boss(self):
@@ -349,18 +388,20 @@ class Boss:
 # 主逻辑类
 class MainGame:
     window = None
-    p1 = None
     enemy_list = []
+    my_list = [None, None]
+    player_count = 1
+    is_choice = 0
     bomb_list = []
     wall_list = []
     water_list = []
     enemy_count = 0
     step = 500
-    my_bullet_create_speed = 10
     boss = None
     game_num = 2
     this_num = 1
     this_pass = 1
+    is_defeat = 0
 
     # 事件处理
     def deal_events(self):
@@ -368,6 +409,17 @@ class MainGame:
         for event in events:
             if event.type == pygame.QUIT:
                 self.game_over("Game Over!")
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    MainGame.player_count = 1
+                    self.create_my_tank()
+                    self.start_game()
+                elif event.key == pygame.K_2:
+                    MainGame.player_count = 2
+                    self.create_my_tank()
+                    self.create_my_tank2()
+                    self.start_game()
+
 
     # 创建地图
     def create_map(self):
@@ -380,7 +432,7 @@ class MainGame:
             create_map2(MainGame)
 
     # 加载地图
-    def load_wall(self):
+    def load_map(self):
         MainGame.window.blit(MainGame.boss.image, MainGame.boss.rect)
         for wall in MainGame.wall_list:
             if wall.live:
@@ -388,22 +440,49 @@ class MainGame:
         for water in MainGame.water_list:
             MainGame.window.blit(water.image, water.rect)
 
-    # 创建我方tank
+    # 选择玩家
+    def choice_player(self):
+        # 创建游戏窗口
+        MainGame.window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        while 1:
+            self.show_font("kaiti", 50, "按数字键选择：", (248, 156, 73), (SCREEN_WIDTH / 2-120, SCREEN_HEIGHT/2-150))
+            self.show_font("kaiti", 50, "1.单人游戏", (248, 156, 73), (SCREEN_WIDTH / 2-90, SCREEN_HEIGHT/2-100))
+            self.show_font("kaiti", 50, "2.双人游戏", (248, 156, 73), (SCREEN_WIDTH / 2-90, SCREEN_HEIGHT/2-50))
+            self.show_font("kaiti", 30, "p1:移动：w s a d  射击：space(空格)", (248, 156, 73), (SCREEN_WIDTH / 2-200, SCREEN_HEIGHT/2+50))
+            self.show_font("kaiti", 30, "p2:移动：↑ ↓ ← →  射击：L", (248, 156, 73), (SCREEN_WIDTH / 2-200, SCREEN_HEIGHT/2+80))
+            self.deal_events()
+            pygame.display.update()
+
+    # 创建我方P1 tank
     def create_my_tank(self):
         flag = 0
-        MainGame.p1 = MyTank(P1_BORN_X, P1_BORN_Y)
+        p1 = MyTank(P1_BORN_X, P1_BORN_Y, 1)
+        MainGame.my_list[0] = p1
         for enemy in MainGame.enemy_list:
-            if pygame.sprite.collide_rect(MainGame.p1, enemy):
+            if pygame.sprite.collide_rect(MainGame.my_list[0], enemy):
                 flag = 1
         if flag == 1:
-            MainGame.p1.rect.y -= MainGame.p1.rect.height
+            MainGame.my_list[0].rect.y -= MainGame.my_list[0].rect.height
+
+    # 创建我方p2 tank
+    def create_my_tank2(self):
+        flag = 0
+        p2 = MyTank(P2_BORN_X, P2_BORN_Y, 2)
+        MainGame.my_list[1] = p2
+        for enemy in MainGame.enemy_list:
+            if pygame.sprite.collide_rect(MainGame.my_list[1], enemy):
+                flag = 1
+        if flag == 1:
+            MainGame.my_list[1].rect.y -= MainGame.my_list[1].rect.height
 
     # 加载我方tank
     def load_my_tank(self):
-        MainGame.p1.display_tank()
-        MainGame.p1.move()
-        MainGame.p1.hit_wall()
-        MainGame.p1.hit_tank()
+        for i in range(MainGame.player_count):
+            if MainGame.my_list[i].live:
+                MainGame.my_list[i].display_tank()
+                MainGame.my_list[i].move()
+                MainGame.my_list[i].hit_wall()
+                MainGame.my_list[i].hit_tank()
 
     # 展示文本信息
     def show_font(self, font, size, content, color, location):
@@ -418,12 +497,21 @@ class MainGame:
     # 展示我方信息
     def show_my_info(self):
         # 展示剩余tank数
-        self.show_font("kaiti", 30, "剩余tank数:{}".format(ENEMY_COUNT-MainGame.p1.shot_enemy)
+        left_enmy = ENEMY_COUNT-MainGame.my_list[0].shot_enemy
+        if MainGame.player_count == 2:
+            left_enmy -= MainGame.my_list[1].shot_enemy
+
+            # 展示p2生命值
+            self.show_font("kaiti", 30, "生命值:{}".format(MainGame.my_list[1].hp), (248, 156, 73), (SCREEN_WIDTH-120, 620))
+            # 展示p2杀敌数
+            self.show_font("kaiti", 30, "杀敌数:{}".format(MainGame.my_list[1].shot_enemy), (248, 156, 73), (SCREEN_WIDTH-120, 650))
+
+        self.show_font("kaiti", 30, "剩余tank数:{}".format(left_enmy)
                        , (248, 156, 73), (SCREEN_WIDTH/2 - 70, 0))
-        # 展示生命值
-        self.show_font("kaiti", 30, "生命值:{}".format(MainGame.p1.hp), (248, 156, 73), (0, 620))
-        # 展示杀敌数
-        self.show_font("kaiti", 30, "杀敌数:{}".format(MainGame.p1.shot_enemy), (248, 156, 73), (0, 650))
+        # 展示p1生命值
+        self.show_font("kaiti", 30, "生命值:{}".format(MainGame.my_list[0].hp), (248, 156, 73), (0, 620))
+        # 展示p1杀敌数
+        self.show_font("kaiti", 30, "杀敌数:{}".format(MainGame.my_list[0].shot_enemy), (248, 156, 73), (0, 650))
 
     # 创建敌方tank
     def create_enemy_tank(self, enemy_create_speed):
@@ -438,7 +526,7 @@ class MainGame:
                 for water in MainGame.water_list:
                     if pygame.sprite.collide_rect(new_enemy, water):
                         flag = 1
-                if not pygame.sprite.collide_rect(new_enemy, MainGame.p1) and flag == 0:
+                if not pygame.sprite.collide_rect(new_enemy, MainGame.my_list[0]) and flag == 0:
                     MainGame.enemy_list.append(new_enemy)
                     MainGame.enemy_count += 1
 
@@ -454,34 +542,42 @@ class MainGame:
 
     # 创建我方子弹
     def create_my_bullet(self):
-        if MainGame.my_bullet_create_speed < 0:
-            if MainGame.p1.is_born:
-                key_list = pygame.key.get_pressed()
-                if key_list[pygame.K_SPACE]:
-                    bullet = MainGame.p1.fire()
-                    MainGame.p1.bullet_list.append(bullet)
-                    MainGame.my_bullet_create_speed = 20
-        else:
-            MainGame.my_bullet_create_speed -= 1
+        for i in range(MainGame.player_count):
+            if MainGame.my_list[i].my_bullet_create_speed < 0:
+                if MainGame.my_list[i].is_born and MainGame.my_list[i].live:
+                    key_list = pygame.key.get_pressed()
+                    if MainGame.my_list[i].player == 1:
+                        if key_list[pygame.K_SPACE]:
+                            bullet = MainGame.my_list[i].fire()
+                            MainGame.my_list[i].bullet_list.append(bullet)
+                            MainGame.my_list[i].my_bullet_create_speed = 20
+                    elif MainGame.my_list[i].player == 2:
+                        if key_list[pygame.K_l]:
+                            bullet = MainGame.my_list[i].fire()
+                            MainGame.my_list[i].bullet_list.append(bullet)
+                            MainGame.my_list[i].my_bullet_create_speed = 20
+            else:
+                MainGame.my_list[i].my_bullet_create_speed -= 1
 
     # 加载我方子弹
     def load_my_bullet(self):
-        for bullet in MainGame.p1.bullet_list:
-            if bullet.live:
-                # 绘制子弹
-                bullet.display_bullet()
-                # 子弹移动
-                bullet.move()
-                # 碰撞检测
-                bullet.hit_wall()
-                bullet.hit_boss()
-                for tank in MainGame.enemy_list:
-                    f = bullet.hit_tank(tank)
-                    if f:
-                        # 杀敌数加1
-                        MainGame.p1.shot_enemy += 1
-                        # 移除敌方tank
-                        MainGame.enemy_list.remove(tank)
+        for i in range(MainGame.player_count):
+            for bullet in MainGame.my_list[i].bullet_list:
+                if bullet.live:
+                    # 绘制子弹
+                    bullet.display_bullet()
+                    # 子弹移动
+                    bullet.move()
+                    # 碰撞检测
+                    bullet.hit_wall()
+                    bullet.hit_boss()
+                    for tank in MainGame.enemy_list:
+                        f = bullet.hit_tank(tank)
+                        if f:
+                            # 杀敌数加1
+                            MainGame.my_list[i].shot_enemy += 1
+                            # 移除敌方tank
+                            MainGame.enemy_list.remove(tank)
 
     # 加载敌方子弹
     def load_enemy_bullet(self):
@@ -498,11 +594,17 @@ class MainGame:
                     #碰撞检测
                     bullet.hit_wall()
                     bullet.hit_boss()
-                    is_hit = bullet.hit_tank(MainGame.p1)
+                    is_hit = bullet.hit_tank(MainGame.my_list[0])
                     if is_hit:
-                        MainGame.p1.is_hit = 1
-                        MainGame.p1.is_born = 0
-                        MainGame.p1.direction = "U"
+                        MainGame.my_list[0].is_hit = 1
+                        MainGame.my_list[0].is_born = 0
+                        MainGame.my_list[0].direction = "U"
+                    if MainGame.player_count == 2:
+                        is_hit = bullet.hit_tank(MainGame.my_list[1])
+                        if is_hit:
+                            MainGame.my_list[1].is_hit = 1
+                            MainGame.my_list[1].is_born = 0
+                            MainGame.my_list[1].direction = "U"
 
     # 加载爆炸特效
     def load_bomb(self):
@@ -512,15 +614,19 @@ class MainGame:
             else:
                 MainGame.bomb_list.remove(bomb)
 
-    # 重置我方tank位置
+    # 被击中时，重置我方tank位置
     def reset_my_location(self):
-        if MainGame.p1.is_born == 1:
-            # 被击中时
-            if MainGame.p1.is_hit:
-                MainGame.p1.hp -= 1
-                MainGame.p1.rect.x = P1_BORN_X
-                MainGame.p1.rect.y = P1_BORN_Y
-                MainGame.p1.is_hit = False
+        for i in range(MainGame.player_count):
+            if MainGame.my_list[i].is_born == 1:
+                # 被击中时
+                if MainGame.my_list[i].is_hit:
+                    if i == 0:
+                        MainGame.my_list[i].rect.x = P1_BORN_X
+                        MainGame.my_list[i].rect.y = P1_BORN_Y
+                    elif i == 1:
+                        MainGame.my_list[i].rect.x = P2_BORN_X
+                        MainGame.my_list[i].rect.y = P2_BORN_Y
+                    MainGame.my_list[i].is_hit = False
 
     # 下一关
     def next_game(self):
@@ -537,81 +643,107 @@ class MainGame:
         self.show_font("kaiti", 70, "You are LOSE!",
                        (248, 156, 73), (SCREEN_WIDTH/2-210, SCREEN_HEIGHT/2-35))
 
+    # 显示关卡
+    def show_game_num(self):
+        MainGame.step -= 1
+        self.next_game()
+        if MainGame.step < 0:
+            MainGame.step = 1000
+            MainGame.this_pass = 0
+
+    # 死亡
+    def die(self):
+        MainGame.step -= 1
+        MainGame.is_defeat = 1
+        self.defeat()
+        if MainGame.step < 0:
+            self.game_over("You are die!")
+
     # 开始游戏
     def start_game(self):
         global ENEMY_COUNT
-        # 创建游戏窗口
-        MainGame.window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        # 创建我方tank
-        self.create_my_tank()
-        # 创建滴入
+        # # 创建游戏窗口
+        # MainGame.window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        # # 选择玩家
+        # self.choice_player()
+        # # 创建我方tank
+        # self.create_my_tank()
+
+        # MainGame.player_count = 2
+        # self.create_my_tank()
+        # self.create_my_tank2()
+        # 创建地图
         self.create_map()
         # 控制敌方tank生成速度
         enemy_create_speed = 80
         while True:
             # 修改背景色
             MainGame.window.fill(COLOR_BLACK)
-            # 显示关卡
-            if MainGame.this_pass and MainGame.this_num <= MainGame.game_num:
-                MainGame.step -= 1
-                self.next_game()
-                if MainGame.step < 0:
-                    MainGame.step = 1000
-                    MainGame.this_pass = 0
             # Game Over
-            elif MainGame.p1.hp < 1 or MainGame.boss.live == 0:
-                MainGame.step -= 1
-                self.defeat()
-                if MainGame.step < 0:
-                    self.game_over("You are die!")
-            # 下一关
-            elif MainGame.this_num < MainGame.game_num and MainGame.enemy_count == ENEMY_COUNT and len(MainGame.enemy_list) == 0:
-                MainGame.step -= 1
-                MainGame.this_num += 1
-                MainGame.this_pass = 1
-                MainGame.enemy_count = 0
-                MainGame.p1.rect.x = P1_BORN_X
-                MainGame.p1.rect.y = P1_BORN_Y
-                MainGame.p1.direction = "U"
-                MainGame.p1.is_born = 0
-                MainGame.p1.shot_enemy = 0
-                MainGame.p1.bullet_list.clear()
-                MainGame.bomb_list.clear()
-                self.create_map()
-                ENEMY_COUNT += 5
-            # 胜利
-            elif MainGame.this_num >= MainGame.game_num and MainGame.enemy_count == ENEMY_COUNT and len(MainGame.enemy_list) == 0:
-                MainGame.step -= 1
-                self.victory()
-                if MainGame.step < 0:
-                    self.game_over("You are win!")
-            else:
-                # 事件处理
-                self.deal_events()
-                # 加载地图
-                self.load_wall()
-                # 加载我方tank
-                self.load_my_tank()
-                # 展示生命值
-                self.show_my_info()
-                # 创建敌方tank
-                self.create_enemy_tank(enemy_create_speed)
-                # 加载敌方tank
-                self.load_enemy_tank()
-                # 创建我方子弹
-                self.create_my_bullet()
-                # 加载我方子弹
-                self.load_my_bullet()
-                # 加载敌方子弹
-                self.load_enemy_bullet()
-                # 加载爆炸特效
-                self.load_bomb()
-                # 重置我方tank位置
-                self.reset_my_location()
-                time.sleep(0.015)
-                enemy_create_speed += MainGame.this_num
-                if enemy_create_speed > 102:
-                    enemy_create_speed = 1
+            if MainGame.boss.live == 0:
+                self.die()
+            elif not MainGame.my_list[0].live and not MainGame.my_list[1]:
+                self.die()
+            elif not MainGame.my_list[0].live and MainGame.my_list[1]:
+                if not MainGame.my_list[1].live:
+                    self.die()
+            if not MainGame.is_defeat:
+                # 显示关卡
+                if MainGame.this_pass and MainGame.this_num <= MainGame.game_num:
+                    self.show_game_num()
+                # 下一关
+                elif MainGame.this_num < MainGame.game_num and MainGame.enemy_count == ENEMY_COUNT and len(MainGame.enemy_list) == 0:
+                    MainGame.step -= 1
+                    MainGame.this_num += 1
+                    MainGame.this_pass = 1
+                    MainGame.enemy_count = 0
+                    for i in range(MainGame.player_count):
+                        if i == 0:
+                            MainGame.my_list[i].rect.x = P1_BORN_X
+                            MainGame.my_list[i].rect.y = P1_BORN_Y
+                        else:
+                            MainGame.my_list[i].rect.x = P2_BORN_X
+                            MainGame.my_list[i].rect.y = P2_BORN_Y
+                        MainGame.my_list[i].direction = "U"
+                        MainGame.my_list[i].is_born = 0
+                        MainGame.my_list[i].shot_enemy = 0
+                        MainGame.my_list[i].bullet_list.clear()
+                        MainGame.bomb_list.clear()
+                        self.create_map()
+                        ENEMY_COUNT += 5
+                # 胜利
+                elif MainGame.this_num >= MainGame.game_num and MainGame.enemy_count == ENEMY_COUNT and len(MainGame.enemy_list) == 0:
+                    MainGame.step -= 1
+                    self.victory()
+                    if MainGame.step < 0:
+                        self.game_over("You are win!")
+                else:
+                    # 事件处理
+                    self.deal_events()
+                    # 加载地图
+                    self.load_map()
+                    # 加载我方tank
+                    self.load_my_tank()
+                    # 展示生命值
+                    self.show_my_info()
+                    # 创建敌方tank
+                    self.create_enemy_tank(enemy_create_speed)
+                    # 加载敌方tank
+                    self.load_enemy_tank()
+                    # 创建我方子弹
+                    self.create_my_bullet()
+                    # 加载我方子弹
+                    self.load_my_bullet()
+                    # 加载敌方子弹
+                    self.load_enemy_bullet()
+                    # 加载爆炸特效
+                    self.load_bomb()
+                    # 重置我方tank位置
+                    self.reset_my_location()
+                    time.sleep(0.015)
+                    enemy_create_speed += MainGame.this_num
+                    if enemy_create_speed > 102:
+                        enemy_create_speed = 1
             # 刷新窗口
             pygame.display.update()
 
@@ -624,4 +756,4 @@ class MainGame:
 
 if __name__ == '__main__':
     game = MainGame()
-    game.start_game()
+    game.choice_player()
