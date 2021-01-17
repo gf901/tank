@@ -5,19 +5,18 @@ import time
 from first_map import create_map1
 from second_map import create_map2
 
-
 # 屏幕尺寸
 SCREEN_WIDTH = 910
 SCREEN_HEIGHT = 680
-#　背景色
+# 　背景色
 COLOR_BLACK = pygame.color.Color(0, 0, 0)
 # 敌方tank数量
 ENEMY_COUNT = 10
 # p1初始位置
-P1_BORN_X = SCREEN_WIDTH/2 - 180
+P1_BORN_X = SCREEN_WIDTH / 2 - 180
 P1_BORN_Y = SCREEN_HEIGHT - 60
 # p2初始位置
-P2_BORN_X = SCREEN_WIDTH/2 + 120
+P2_BORN_X = SCREEN_WIDTH / 2 + 120
 P2_BORN_Y = SCREEN_HEIGHT - 60
 # 我方初始生命值
 HP = 3
@@ -281,17 +280,17 @@ class Bullet:
         self.speed = 9
         self.live = True
         if self.direction == "U":
-            self.rect.x = tank.rect.x + tank.rect.width/2 - self.rect.width/2
+            self.rect.x = tank.rect.x + tank.rect.width / 2 - self.rect.width / 2
             self.rect.y = tank.rect.y - self.rect.height
         elif self.direction == "D":
-            self.rect.x = tank.rect.x + tank.rect.width/2 - self.rect.width/2
+            self.rect.x = tank.rect.x + tank.rect.width / 2 - self.rect.width / 2
             self.rect.y = tank.rect.y + tank.rect.height
         elif self.direction == "R":
             self.rect.x = tank.rect.x + tank.rect.width
-            self.rect.y = tank.rect.y + tank.rect.height/2 - self.rect.height/2
+            self.rect.y = tank.rect.y + tank.rect.height / 2 - self.rect.height / 2
         elif self.direction == "L":
             self.rect.x = tank.rect.x - self.rect.width
-            self.rect.y = tank.rect.y + tank.rect.height/2 - self.rect.height/2
+            self.rect.y = tank.rect.y + tank.rect.height / 2 - self.rect.height / 2
 
     def display_bullet(self):
         MainGame.window.blit(self.image, self.rect)
@@ -366,7 +365,7 @@ class Bomb:
 
 # 墙壁类
 class Wall:
-    def __init__(self,img, x, y, type):
+    def __init__(self, img, x, y, type):
         self.image = pygame.image.load(img)
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -377,7 +376,7 @@ class Wall:
 
 # Boss类
 class Boss:
-    def __init__(self,img, x, y):
+    def __init__(self, img, x, y):
         self.image = pygame.image.load(img)
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -420,7 +419,6 @@ class MainGame:
                     self.create_my_tank2()
                     self.start_game()
 
-
     # 创建地图
     def create_map(self):
         # 创建老窝
@@ -445,11 +443,14 @@ class MainGame:
         # 创建游戏窗口
         MainGame.window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         while 1:
-            self.show_font("kaiti", 50, "按数字键选择：", (248, 156, 73), (SCREEN_WIDTH / 2-120, SCREEN_HEIGHT/2-150))
-            self.show_font("kaiti", 50, "1.单人游戏", (248, 156, 73), (SCREEN_WIDTH / 2-90, SCREEN_HEIGHT/2-100))
-            self.show_font("kaiti", 50, "2.双人游戏", (248, 156, 73), (SCREEN_WIDTH / 2-90, SCREEN_HEIGHT/2-50))
-            self.show_font("kaiti", 30, "p1:移动：w s a d  射击：space(空格)", (248, 156, 73), (SCREEN_WIDTH / 2-200, SCREEN_HEIGHT/2+50))
-            self.show_font("kaiti", 30, "p2:移动：↑ ↓ ← →  射击：L", (248, 156, 73), (SCREEN_WIDTH / 2-200, SCREEN_HEIGHT/2+80))
+            font_name = "arial"
+            self.show_font(font_name, 50, "按数字键选择：", (248, 156, 73), (SCREEN_WIDTH / 2 - 120, SCREEN_HEIGHT / 2 - 150))
+            self.show_font(font_name, 50, "1.单人游戏", (248, 156, 73), (SCREEN_WIDTH / 2 - 90, SCREEN_HEIGHT / 2 - 100))
+            self.show_font(font_name, 50, "2.双人游戏", (248, 156, 73), (SCREEN_WIDTH / 2 - 90, SCREEN_HEIGHT / 2 - 50))
+            self.show_font(font_name, 30, "p1:移动：w s a d  射击：space(空格)", (248, 156, 73),
+                           (SCREEN_WIDTH / 2 - 200, SCREEN_HEIGHT / 2 + 50))
+            self.show_font(font_name, 30, "p2:移动：↑ ↓ ← →  射击：L", (248, 156, 73),
+                           (SCREEN_WIDTH / 2 - 200, SCREEN_HEIGHT / 2 + 80))
             self.deal_events()
             pygame.display.update()
 
@@ -497,17 +498,19 @@ class MainGame:
     # 展示我方信息
     def show_my_info(self):
         # 展示剩余tank数
-        left_enmy = ENEMY_COUNT-MainGame.my_list[0].shot_enemy
+        left_enmy = ENEMY_COUNT - MainGame.my_list[0].shot_enemy
         if MainGame.player_count == 2:
             left_enmy -= MainGame.my_list[1].shot_enemy
 
             # 展示p2生命值
-            self.show_font("kaiti", 30, "生命值:{}".format(MainGame.my_list[1].hp), (248, 156, 73), (SCREEN_WIDTH-120, 620))
+            self.show_font("kaiti", 30, "生命值:{}".format(MainGame.my_list[1].hp), (248, 156, 73),
+                           (SCREEN_WIDTH - 120, 620))
             # 展示p2杀敌数
-            self.show_font("kaiti", 30, "杀敌数:{}".format(MainGame.my_list[1].shot_enemy), (248, 156, 73), (SCREEN_WIDTH-120, 650))
+            self.show_font("kaiti", 30, "杀敌数:{}".format(MainGame.my_list[1].shot_enemy), (248, 156, 73),
+                           (SCREEN_WIDTH - 120, 650))
 
         self.show_font("kaiti", 30, "剩余tank数:{}".format(left_enmy)
-                       , (248, 156, 73), (SCREEN_WIDTH/2 - 70, 0))
+                       , (248, 156, 73), (SCREEN_WIDTH / 2 - 70, 0))
         # 展示p1生命值
         self.show_font("kaiti", 30, "生命值:{}".format(MainGame.my_list[0].hp), (248, 156, 73), (0, 620))
         # 展示p1杀敌数
@@ -519,7 +522,7 @@ class MainGame:
             flag = 0
             # 已生成敌方tank数小于敌方tank总数
             if MainGame.enemy_count < ENEMY_COUNT:
-                new_enemy = EnemyTank(random.randint(0, SCREEN_WIDTH-60), 0)
+                new_enemy = EnemyTank(random.randint(0, SCREEN_WIDTH - 60), 0)
                 for enemy in MainGame.enemy_list:
                     if pygame.sprite.collide_rect(new_enemy, enemy):
                         flag = 1
@@ -591,7 +594,7 @@ class MainGame:
                     bullet.display_bullet()
                     # 子弹移动
                     bullet.move()
-                    #碰撞检测
+                    # 碰撞检测
                     bullet.hit_wall()
                     bullet.hit_boss()
                     is_hit = bullet.hit_tank(MainGame.my_list[0])
@@ -631,17 +634,17 @@ class MainGame:
     # 下一关
     def next_game(self):
         self.show_font("kaiti", 70, "第{}关".format(MainGame.this_num),
-                       (248, 156, 73), (SCREEN_WIDTH/2-70, SCREEN_HEIGHT/2-35))
+                       (248, 156, 73), (SCREEN_WIDTH / 2 - 70, SCREEN_HEIGHT / 2 - 35))
 
     # 胜利
     def victory(self):
-        self.show_font("kaiti", 70, "You are WIN!",
-                       (248, 156, 73), (SCREEN_WIDTH/2-210, SCREEN_HEIGHT/2-35))
+        self.show_font("kaiti", 70, "You WIN!",
+                       (248, 156, 73), (SCREEN_WIDTH / 2 - 210, SCREEN_HEIGHT / 2 - 35))
 
     # 失败
     def defeat(self):
-        self.show_font("kaiti", 70, "You are LOSE!",
-                       (248, 156, 73), (SCREEN_WIDTH/2-210, SCREEN_HEIGHT/2-35))
+        self.show_font("kaiti", 70, "You Failed!",
+                       (248, 156, 73), (SCREEN_WIDTH / 2 - 210, SCREEN_HEIGHT / 2 - 35))
 
     # 显示关卡
     def show_game_num(self):
@@ -657,7 +660,7 @@ class MainGame:
         MainGame.is_defeat = 1
         self.defeat()
         if MainGame.step < 0:
-            self.game_over("You are die!")
+            self.game_over("You are dead!")
 
     # 开始游戏
     def start_game(self):
@@ -676,7 +679,13 @@ class MainGame:
         self.create_map()
         # 控制敌方tank生成速度
         enemy_create_speed = 80
+        clock = pygame.time.Clock()
+
         while True:
+            clock.tick(100)
+            event = pygame.event.poll()
+            if event == pygame.QUIT:
+                pygame.quit()
             # 修改背景色
             MainGame.window.fill(COLOR_BLACK)
             # Game Over
@@ -692,7 +701,8 @@ class MainGame:
                 if MainGame.this_pass and MainGame.this_num <= MainGame.game_num:
                     self.show_game_num()
                 # 下一关
-                elif MainGame.this_num < MainGame.game_num and MainGame.enemy_count == ENEMY_COUNT and len(MainGame.enemy_list) == 0:
+                elif MainGame.this_num < MainGame.game_num and MainGame.enemy_count == ENEMY_COUNT and len(
+                        MainGame.enemy_list) == 0:
                     MainGame.step -= 1
                     MainGame.this_num += 1
                     MainGame.this_pass = 1
@@ -712,11 +722,12 @@ class MainGame:
                         self.create_map()
                         ENEMY_COUNT += 5
                 # 胜利
-                elif MainGame.this_num >= MainGame.game_num and MainGame.enemy_count == ENEMY_COUNT and len(MainGame.enemy_list) == 0:
+                elif MainGame.this_num >= MainGame.game_num and MainGame.enemy_count == ENEMY_COUNT and len(
+                        MainGame.enemy_list) == 0:
                     MainGame.step -= 1
                     self.victory()
                     if MainGame.step < 0:
-                        self.game_over("You are win!")
+                        self.game_over("You win!")
                 else:
                     # 事件处理
                     self.deal_events()
