@@ -25,12 +25,12 @@ class Wall:
 
 
 class Bullet:
-    def __init__(self, tank):
+    def __init__(self, tank, speed):
         self.img = pygame.image.load("img/tankmissile.gif")
         self.rect = self.img.get_rect()
         self.direction = tank.direction
         self.live = True
-        self.speed = 3
+        self.speed = speed
         self.is_enemy = False if isinstance(tank, MyTank) else True
         if tank.direction == "U":
             self.rect.x = tank.rect.x + 30 - self.rect.width / 2
@@ -91,7 +91,7 @@ class MyTank:
         self.oldx = x
         self.oldy = y
         self.live = True
-        self.speed = 5
+        self.speed = 4
         self.fire_limit = 20
         self.bullet_list = []
 
@@ -121,7 +121,7 @@ class MyTank:
 
     def fire(self):
         if self.fire_limit < 0:
-            bullet = Bullet(self)
+            bullet = Bullet(self, 5)
             self.bullet_list.append(bullet)
             self.fire_limit = 20
 
@@ -180,7 +180,7 @@ class EnemyTank:
 
     def fire(self):
         if self.fire_limit < 0:
-            bullet = Bullet(self)
+            bullet = Bullet(self, 3)
             self.bullet_list.append(bullet)
             self.fire_limit = 80
 

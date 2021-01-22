@@ -395,7 +395,7 @@ class MainGame:
     wall_list = []
     water_list = []
     enemy_count = 0
-    step = 500
+    step = 300
     boss = None
     game_num = 2
     this_num = 1
@@ -443,11 +443,12 @@ class MainGame:
         # 创建游戏窗口
         MainGame.window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         while 1:
-            font_name = "arial"
+            MainGame.window.fill((0, 0, 0))
+            font_name = "kaiti"
             self.show_font(font_name, 50, "按数字键选择：", (248, 156, 73), (SCREEN_WIDTH / 2 - 120, SCREEN_HEIGHT / 2 - 150))
             self.show_font(font_name, 50, "1.单人游戏", (248, 156, 73), (SCREEN_WIDTH / 2 - 90, SCREEN_HEIGHT / 2 - 100))
             self.show_font(font_name, 50, "2.双人游戏", (248, 156, 73), (SCREEN_WIDTH / 2 - 90, SCREEN_HEIGHT / 2 - 50))
-            self.show_font(font_name, 30, "p1:移动：w s a d  射击：space(空格)", (248, 156, 73),
+            self.show_font(font_name, 30, "p1:移动：w a s d  射击：space(空格)", (248, 156, 73),
                            (SCREEN_WIDTH / 2 - 200, SCREEN_HEIGHT / 2 + 50))
             self.show_font(font_name, 30, "p2:移动：↑ ↓ ← →  射击：L", (248, 156, 73),
                            (SCREEN_WIDTH / 2 - 200, SCREEN_HEIGHT / 2 + 80))
@@ -651,7 +652,7 @@ class MainGame:
         MainGame.step -= 1
         self.next_game()
         if MainGame.step < 0:
-            MainGame.step = 1000
+            MainGame.step = 300
             MainGame.this_pass = 0
 
     # 死亡
