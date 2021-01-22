@@ -215,7 +215,7 @@ def start():
     while True:
         clock.tick(100)
         event = pygame.event.poll()
-        if event == pygame.QUIT:
+        if event.type == pygame.QUIT:
             pygame.quit()
 
         screen.fill(pygame.color.Color(0, 0, 0))

@@ -685,7 +685,7 @@ class MainGame:
         while True:
             clock.tick(100)
             event = pygame.event.poll()
-            if event == pygame.QUIT:
+            if event.type == pygame.QUIT:
                 pygame.quit()
             # 修改背景色
             MainGame.window.fill(COLOR_BLACK)
